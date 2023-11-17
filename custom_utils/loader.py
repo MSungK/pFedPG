@@ -32,6 +32,9 @@ def prepare_data(cfg):
     webcam_trainset = OfficeDataset(data_base_path, 'webcam', transform=transform_office)
     webcam_testset = OfficeDataset(data_base_path, 'webcam', transform=transform_test, train=False)
 
+    print(len(amazon_trainset)+len(amazon_testset)+len(caltech_trainset)+len(caltech_testset)+len(dslr_trainset)+len(dslr_testset)+len(webcam_trainset)+len(webcam_testset))
+
+
     min_data_len = min(len(amazon_trainset), len(caltech_trainset), len(dslr_trainset), len(webcam_trainset))
     val_len = int(min_data_len * 0.4)
     min_data_len = int(min_data_len * 0.5)
@@ -48,6 +51,8 @@ def prepare_data(cfg):
     webcam_valset = torch.utils.data.Subset(webcam_trainset, list(range(len(webcam_trainset)))[-val_len:]) 
     webcam_trainset = torch.utils.data.Subset(webcam_trainset, list(range(min_data_len)))
 
+    print(len(amazon_valset)+len(caltech_valset)+len(dslr_valset)+len(webcam_valset)+len(amazon_trainset)+len(amazon_testset)+len(caltech_trainset)+len(caltech_testset)+len(dslr_trainset)+len(dslr_testset)+len(webcam_trainset)+len(webcam_testset))
+    exit()
     amazon_train_loader = torch.utils.data.DataLoader(amazon_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True)
     amazon_val_loader = torch.utils.data.DataLoader(amazon_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
     amazon_test_loader = torch.utils.data.DataLoader(amazon_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
