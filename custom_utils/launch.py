@@ -68,6 +68,8 @@ def default_argument_parser():
     """
     parser = argparse.ArgumentParser(description="visual-prompt")
     parser.add_argument(
+        "--device", default="0", type=int, help="device for trian/inference")
+    parser.add_argument(
         "--config-file", default="", metavar="FILE", help="path to config file")
     parser.add_argument(
         "--train-type", default="", help="training types")
@@ -77,7 +79,6 @@ def default_argument_parser():
         default=None,
         nargs=argparse.REMAINDER,
     )
-
     return parser
 
 

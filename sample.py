@@ -5,12 +5,14 @@ import random
 import torch
 import numpy as np
 
-from src.utils.file_io import PathManager
-from src.models.vit_models import ViT
+from custom_src.utils.file_io import PathManager
+from custom_src.models.vit_models import ViT
 from custom_utils.launch import default_argument_parser, logging_train_setup
-from src.configs.config import get_cfg
-from src.models.build_model import build_model
+from custom_src.configs.config import get_cfg
+from custom_src.models.build_model import build_model
+from custom_src.engine.trainer import Trainer
 from server import PromptGenerator
+from custom_utils.loader import prepare_data
 
 
 def setup(args):
@@ -48,9 +50,23 @@ def train(cfg, args):
         torch.manual_seed(cfg.SEED)
         np.random.seed(cfg.SEED)
         random.seed(0)
-    model, cur_device = build_model(cfg)
-    server = PromptGenerator(num_clients=4, config=cfg)
-    print(server)
+    device = args.device 
+    # DataLoader
+    train_loaders, val_loaders, test_loaders = prepare_data(cfg) # B 3 224 224 
+    num_clients = len(train_loaders)
+    # Server 
+    server = PromptGenerator(num_clients=num_clients, config=cfg)
+    # Each Client have vpt
+    clients = [build_model(cfg, device) for _ in range(num_clients)] # Freezed except prompt, head
+    # Setting for Train
+    clients = [Trainer(cfg=cfg, model=clients[i], device=device) for i in range(num_clients)]
+    
+    for client_index, client in enumerate(clients):
+        print(f'Start client {client_index} training')
+        client.train_classifier(train_loaders[client_index],val_loaders[client_index],test_loaders[client_index])
+        
+    
+
 
 
 def main(args):

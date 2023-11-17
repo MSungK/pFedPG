@@ -8,14 +8,16 @@ import os
 class OfficeDataset(Dataset):
     def __init__(self, base_path, site, train=True, transform=None):
         if train:
-            self.paths, self.text_labels = np.load('../data/office_caltech_10/{}_train.pkl'.format(site), allow_pickle=True)
+            # self.paths, self.text_labels = np.load('../data/office_caltech_10/{}_train.pkl'.format(site), allow_pickle=True)
+            self.paths, self.text_labels = np.load(f'{base_path}/{site}_train.pkl', allow_pickle=True)
         else:
-            self.paths, self.text_labels = np.load('../data/office_caltech_10/{}_test.pkl'.format(site), allow_pickle=True)
+            # self.paths, self.text_labels = np.load('../data/office_caltech_10/{}_test.pkl'.format(site), allow_pickle=True)
+            self.paths, self.text_labels = np.load(f'{base_path}/{site}_test.pkl', allow_pickle=True)
             
         label_dict={'back_pack':0, 'bike':1, 'calculator':2, 'headphones':3, 'keyboard':4, 'laptop_computer':5, 'monitor':6, 'mouse':7, 'mug':8, 'projector':9}
         self.labels = [label_dict[text] for text in self.text_labels]
         self.transform = transform
-        self.base_path = base_path if base_path is not None else '../data'
+        self.base_path = os.path.dirname(base_path)
 
     def __len__(self):
         return len(self.labels)
