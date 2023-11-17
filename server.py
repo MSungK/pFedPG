@@ -20,6 +20,7 @@ class PromptGenerator(nn.Module):
 
         self.client_agnostic_prompt_basis = nn.Parameter(torch.zeros(
             1, num_tokens, prompt_dim))
+        
         # xavier_uniform initialization
         nn.init.uniform_(self.client_agnostic_prompt_basis.data, -val, val)
 
@@ -55,21 +56,30 @@ class PromptGenerator(nn.Module):
         return x.permute(0, 2, 1, 3)
 
     def forward(self):
-        mixed_q_layer = self.w_q(self.client_descriptors) # B, num_client, num_heads * attention_head_dims
-        mixed_k_layer = self.w_k(self.client_agnostic_prompt_basis) # B, num_tokens, num_heads * attention_head_dims
+        # b num_clients num_tokens d*h
+        mixed_q_layer = self.w_q(self.client_descriptors) # 1, num_client, num_heads * attention_head_dims
+        mixed_k_layer = self.w_k(self.client_agnostic_prompt_basis) # 1, num_tokens, num_heads * attention_head_dims
         mixed_v_layer = self.w_v(self.client_agnostic_prompt_basis)
 
         q_layer = self.transpose_for_scores(mixed_q_layer)
         k_layer = self.transpose_for_scores(mixed_k_layer)
         v_layer = self.transpose_for_scores(mixed_v_layer)
-        
-        attention_scores = torch.matmul(q_layer,k_layer.transpose(-1, -2)) # B, num_head, num_clients, num_tokens
+
+        attention_scores = torch.matmul(q_layer,k_layer.transpose(-1, -2)) # 1, num_head, num_clients, num_tokens
         attention_scores = attention_scores / math.sqrt(self.attention_head_dims)
+
         attention_probs = self.softmax(attention_scores)
 
         context_layer = torch.matmul(attention_probs,v_layer)
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
+
         new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_dims,)
         context_layer = context_layer.view(*new_context_layer_shape)
+        # 1 num_clients dims
         attention_output = self.out(context_layer)
-        return attention_output 
+        # 1 num_tokens dims
+        client_specific_prompts = list()
+        for i in range(self.num_clients):
+            client_specific_prompts.append(self.client_agnostic_prompt_basis + attention_output[0,i,:])
+        client_specific_prompts = torch.cat(client_specific_prompts, dim = 1)
+        return client_specific_prompts

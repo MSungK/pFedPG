@@ -34,7 +34,7 @@ class Trainer():
         cfg: CfgNode,
         model: nn.Module,
         device: torch.device,
-        index = int
+        index : int
     ) -> None:
         self.cfg = cfg
         self.model = model
@@ -134,18 +134,22 @@ class Trainer():
         total_epoch = self.cfg.SOLVER.TOTAL_EPOCH
         total_data = len(train_loader.dataset)
         best_epoch = -1
-        best_metric = 0
+        self.best_metric = 0
         # log_interval = self.cfg.SOLVER.LOG_EVERY_N
 
         losses = AverageMeter('Loss', ':.4e')
         # batch_time = AverageMeter('Time', ':6.3f')
         # data_time = AverageMeter('Data', ':6.3f')
-
-        self.cls_weights = train_loader.dataset.get_class_weights(
-            self.cfg.DATA.CLASS_WEIGHTS_TYPE)
+        # TODO, Consider the F.crossentropy cls weight 
+        self.cls_weights = None
+        # print(self.cfg)
+        # exit()
+        # self.cls_weights = train_loader.dataset.get_class_weights(
+        #     self.cfg.DATA.CLASS_WEIGHTS_TYPE)
         # logger.info(f"class weights: {self.cls_weights}")
         patience = 0  # if > self.cfg.SOLVER.PATIENCE, stop training
 
+        print('==='*10)
         for epoch in range(total_epoch):
             # reset averagemeters to measure per-epoch results
             losses.reset()
@@ -163,7 +167,7 @@ class Trainer():
                 train_loss, _ = self.forward_one_batch(images, labels, is_train=True)
                 losses.update(train_loss.item(), images.shape[0])
             
-            print(f'Training {epoch+1} loss: {losses.avg:3d}')
+            print(f'Training {epoch+1} loss: {losses.avg:3f}')
             
             self.train_loss_list.append(losses.avg)
 
@@ -175,10 +179,10 @@ class Trainer():
 
             val_loss, val_acc = self.eval_classifier(val_loader, save=True)
 
-            if val_acc > best_metric:
-                best_metric = val_acc
+            if val_acc > self.best_metric:
+                self.best_metric = val_acc
                 best_epoch = epoch + 1
-                print(f'Best epoch {best_epoch}: best metric: {best_metric:.3f}')
+                print(f'Best epoch {best_epoch}: best metric: {self.best_metric:.3f}')
                 patience = 0
                 if self.cfg.MODEL.SAVE_CKPT:
                     out_path = os.path.join(
@@ -228,13 +232,14 @@ class Trainer():
         acc = 0
         total = 0
 
-        for images, labels in enumerate(data_loader):
+        print('Calculating Accuracy at Validation Set')
+        for images, labels in data_loader:
 
             loss, outputs = self.forward_one_batch(images, labels, False)
             
             losses.update(loss.item(), images.shape[0])
             acc += self.calculate_accuracy(logits=outputs, target=labels)
-            total = images.shape[0]
+            total += images.shape[0]
         
         val_acc = acc / total
 
@@ -252,5 +257,33 @@ class Trainer():
     
     @torch.no_grad()
     def calculate_accuracy(self, logits : torch.tensor, target : torch.tensor):
+        target = target.cpu()
+        logits = logits.cpu()
         logits = torch.argmax(logits, dim=1)
         return torch.sum(logits == target).item()
+    
+    def initialize_prompt(self, client_specific_prompt : torch.tensor):
+        cnt = 0
+        self.initial_prompt = None
+        client_specific_prompt = torch.unsqueeze(client_specific_prompt, dim=0)
+
+        for key, param in self.model.named_parameters():
+            if 'prompt' in key:
+                assert param.shape == client_specific_prompt.shape
+                param = client_specific_prompt
+                self.initial_prompt = param.clone()
+                print(f'Initialize client {self.index} prompt with server')
+                cnt+=1
+        assert cnt == 1
+
+    def calculate_delta_prompt(self):
+        cnt = 0
+        delta = None
+        
+        for key, param in self.model.named_parameters():
+            if 'prompt' in key:
+                delta = param - self.initial_prompt
+                cnt += 1
+        assert cnt == 1
+        
+        return delta

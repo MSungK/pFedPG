@@ -50,23 +50,44 @@ def train(cfg, args):
         torch.manual_seed(cfg.SEED)
         np.random.seed(cfg.SEED)
         random.seed(0)
-    device = args.device 
+    assert torch.cuda.is_available()
+    device = f'cuda:{args.device}'
     # DataLoader
     train_loaders, val_loaders, test_loaders = prepare_data(cfg) # B 3 224 224 
+    # for loader in train_loaders:
+    #     print(len(loader.dataset))
+    # exit()
     num_clients = len(train_loaders)
     # Server 
-    server = PromptGenerator(num_clients=num_clients, config=cfg)
+    server = PromptGenerator(num_clients=num_clients, config=cfg).to(device)
     # Each Client have vpt
     clients = [build_model(cfg, device) for _ in range(num_clients)] # Freezed except prompt, head
     # Setting for Train
-    clients = [Trainer(cfg=cfg, model=clients[i], device=device) for i in range(num_clients)]
+    clients = [Trainer(cfg=cfg, model=clients[i], device=device, index=i) for i in range(num_clients)]
     
-    for client_index, client in enumerate(clients):
-        print(f'Start client {client_index} training')
-        client.train_classifier(train_loaders[client_index],val_loaders[client_index],test_loaders[client_index])
-        
-    
+    server_epochs = 5
+    server_optimizer = torch.optim.AdamW(params=server.parameters(),lr=1e-3, weight_decay=1e-4)
 
+    for server_epoch in range(server_epochs):
+        server_optimizer.zero_grad()
+        server.train()
+        client_prompts = server.forward() # 1 num_clients embedded_dims
+
+        client_deltas = list()
+
+        # SOLVER.TOTAL_EPOCH : communication round
+        for client_index, client in enumerate(clients):
+            client.initialize_prompt(client_prompts[0, client_index*10:(client_index+1)*10, :]) # Server gives client-specific client client
+            print(f'Start client {client_index} training')
+            client.train_classifier(train_loaders[client_index],val_loaders[client_index],test_loaders[client_index])
+            client_deltas.append(client.calculate_delta_prompt())
+        
+        print('***' * 10)
+        print(f'Server Epoch: {server_epoch + 1}')
+        client_deltas = torch.cat(client_deltas, dim = 1)
+        assert client_prompts.shape == client_deltas.shape
+        client_prompts.backward(client_deltas) # upstream gradient: client_deltas
+        server_optimizer.step()
 
 
 def main(args):
