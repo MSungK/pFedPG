@@ -128,7 +128,7 @@ class Trainer():
     #     labels = data["label"]
     #     return inputs, labels
 
-    def train_classifier(self, train_loader, val_loader, test_loader):
+    def train_classifier(self, train_loader, val_loader, test_loader, server_epoch):
         """
         Train a classifier using epoch
         """
@@ -160,7 +160,7 @@ class Trainer():
             # batch_time.reset()
             # data_time.reset()
 
-            lr = self.scheduler.get_lr()[0]
+            lr = self.scheduler.get_last_lr()
             print(f'Training {epoch+1} / {total_epoch} epoch, with client {self.index}')
 
             # Enable training mode
@@ -183,10 +183,10 @@ class Trainer():
 
             val_loss, val_acc = self.eval_classifier(val_loader, test=False)
 
-            if val_acc > self.best_metric['acc']:
+            if val_acc >= self.best_metric['acc']:
                 best_epoch = epoch + 1
                 self.best_metric['acc'] = val_acc
-                self.best_metric['epoch'] = best_epoch
+                self.best_metric['epoch'] = server_epoch
 
                 print(f'Best epoch {best_epoch}: best metric: {self.best_metric["acc"]:.3f}')
 

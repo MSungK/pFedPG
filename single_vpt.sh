@@ -1,12 +1,12 @@
 #! /usr/bin/zsh
 
-rm -r results/*
+rm -r single_vpt/*
 
 for seed in "42" "44" "46" "48" "50"
 do
     echo "Current Seed: $seed"
-    python pFedPG.py \
-        --device 1 \
+    python single_vpt.py \
+        --device 2 \
         --lr 1e-3 \
         --weight_decay 1e-4 \
         --server_epoch 5 \
@@ -23,5 +23,5 @@ do
         SOLVER.WEIGHT_DECAY "0.001" \
         SEED $seed \
         MODEL.MODEL_ROOT "weights/" \
-        OUTPUT_DIR "results" 
+        OUTPUT_DIR "single_vpt" 
 done

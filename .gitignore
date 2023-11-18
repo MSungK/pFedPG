@@ -142,3 +142,4 @@ dmypy.json
 # pFedPG
 weights/*
 results/*
+single_vpt/*
