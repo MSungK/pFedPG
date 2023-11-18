@@ -238,7 +238,6 @@ class Trainer():
         acc = 0
         total = 0
 
-        print('Calculating Accuracy at Validation Set')
         for images, labels in data_loader:
 
             loss, outputs = self.forward_one_batch(images, labels, False)

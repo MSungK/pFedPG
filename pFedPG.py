@@ -90,8 +90,6 @@ def train(cfg, args):
             client.train_classifier(train_loaders[client_index],val_loaders[client_index],test_loaders[client_index])
             client_deltas.append(client.calculate_delta_prompt())
         
-        print('***' * 10)
-        print(f'Server Epoch: {server_epoch + 1}')
         client_deltas = torch.cat(client_deltas, dim = 1)
         assert client_prompts.shape == client_deltas.shape
         client_prompts.backward(client_deltas) # upstream gradient: client_deltas
