@@ -104,7 +104,6 @@ def train(cfg, args):
     for i, client in enumerate(clients):
         test_acc = client.eval_classifier(test_loaders[i], test=True)
         client_dir = client.client_save_path
-        os.makedirs(client_dir, exist_ok=True)
         plt.plot(range(len(client.train_loss_list)), client.train_loss_list)
         plt.plot(range(len(client.val_loss_list)), client.val_loss_list)
         plt.xlabel('iteration')

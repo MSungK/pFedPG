@@ -47,6 +47,7 @@ class Trainer():
         self.max_val_loss = 1e5
         self.best_metric = 0
         self.client_save_path = client_save_path
+        os.makedirs(self.client_save_path, exist_ok=True)
 
         # solver related
         self.optimizer = make_optimizer([self.model], cfg.SOLVER)
@@ -179,7 +180,7 @@ class Trainer():
 
             # eval at each epoch for single gpu training
 
-            val_loss, val_acc = self.eval_classifier(val_loader, save=True)
+            val_loss, val_acc = self.eval_classifier(val_loader, test=False)
 
             if val_acc > self.best_metric:
                 self.best_metric = val_acc
@@ -247,7 +248,7 @@ class Trainer():
             total += images.shape[0]
         
         val_acc = acc / total
-        
+
         if test:
             return val_acc
 
@@ -298,5 +299,5 @@ class Trainer():
         return delta
     
     def save_client_param(self):
-        torch.save(self.model.parameters(), os.path.join(self.client_save_path, 'best_val.pth'))
+        torch.save(self.model.state_dict(), os.path.join(self.client_save_path, 'best_val.pth'))
         
