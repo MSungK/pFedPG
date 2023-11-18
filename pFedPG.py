@@ -66,13 +66,17 @@ def train(cfg, args):
     # Each Client have vpt
     clients = [build_model(cfg, device) for _ in range(num_clients)] # Freezed except prompt, head
     # Setting for Train
-    clients = [Trainer(cfg=cfg, model=clients[i], device=device, index=i) for i in range(num_clients)]
+    clients = [Trainer(cfg=cfg, model=clients[i], device=device, 
+                       index=i, client_save_path=os.path.join(cfg.OUTPUT_DIR, f'client_{i}')) 
+                       for i in range(num_clients)]
     
     server_epochs = args.server_epoch
     server_optimizer = torch.optim.AdamW(params=server.parameters(),lr=args.lr, weight_decay=args.weight_decay)
     # print(cfg)
     # exit()
     for server_epoch in range(server_epochs):
+        print('^^^'*10)
+        print(f'Start server {server_epoch} / {server_epochs} training')
         server_optimizer.zero_grad()
         server.train()
         client_prompts = server.forward() # 1 num_clients embedded_dims
@@ -93,12 +97,13 @@ def train(cfg, args):
         client_prompts.backward(client_deltas) # upstream gradient: client_deltas
         server_optimizer.step()
     
-    print('!!!' * 10)
+    print('END' * 10)
     print('All Training is ended')
-    f = open(os.path.join(cfg.OUTPUT_DIR, 'val_acc.txt'), 'w')
+    f = open(os.path.join(cfg.OUTPUT_DIR, 'val_test_acc.txt'), 'w')
 
     for i, client in enumerate(clients):
-        client_dir = os.path.join(cfg.OUTPUT_DIR, f'client_i')
+        test_acc = client.eval_classifier(test_loaders[i], test=True)
+        client_dir = client.client_save_path
         os.makedirs(client_dir, exist_ok=True)
         plt.plot(range(len(client.train_loss_list)), client.train_loss_list)
         plt.plot(range(len(client.val_loss_list)), client.val_loss_list)
@@ -106,8 +111,9 @@ def train(cfg, args):
         plt.ylabel('loss')
         plt.title('train & val loss')
         plt.savefig(f'{client_dir}/loss.png')
-        f.write(f'client_{i}: {client.best_metric} \n')
-        print(f'client_{i}: {client.best_metric}')
+        f.write(f'client_{i} val: {client.best_metric} \n')
+        f.write(f'client_{i} test: {test_acc} \n')
+        print(f'client_{i}: {test_acc}')
     f.close()
     
 

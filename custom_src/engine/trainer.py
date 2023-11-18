@@ -34,7 +34,8 @@ class Trainer():
         cfg: CfgNode,
         model: nn.Module,
         device: torch.device,
-        index : int
+        index : int,
+        client_save_path : str
     ) -> None:
         self.cfg = cfg
         self.model = model
@@ -45,6 +46,7 @@ class Trainer():
         self.val_acc_list = list()
         self.max_val_loss = 1e5
         self.best_metric = 0
+        self.client_save_path = client_save_path
 
         # solver related
         self.optimizer = make_optimizer([self.model], cfg.SOLVER)
@@ -184,10 +186,11 @@ class Trainer():
                 best_epoch = epoch + 1
                 print(f'Best epoch {best_epoch}: best metric: {self.best_metric:.3f}')
                 patience = 0
-                if self.cfg.MODEL.SAVE_CKPT:
-                    out_path = os.path.join(
-                        self.cfg.OUTPUT_DIR, f"best_for_client{self.index}.pth")
-                    torch.save(self.model.parameters(), out_path)
+                # if self.cfg.MODEL.SAVE_CKPT:
+                #     out_path = os.path.join(
+                #         self.cfg.OUTPUT_DIR, f"best_for_client{self.index}.pth")
+                #     torch.save(self.model.parameters(), out_path)
+                self.save_client_param()
             else:
                 patience += 1
             
@@ -217,10 +220,12 @@ class Trainer():
                     self.cfg.OUTPUT_DIR, f"prompt_{self.index}.pth"))
 
     @torch.no_grad()
-    def eval_classifier(self, data_loader, save=False):
+    def eval_classifier(self, data_loader, test=False):
         """evaluate classifier"""
         # batch_time = AverageMeter('Time', ':6.3f')
         # data_time = AverageMeter('Data', ':6.3f')
+        if test:
+            self.model.load_state_dict(torch.load(os.path.join(self.client_save_path, 'best_val.pth')))
         losses = AverageMeter('Loss', ':.4e')
 
         total = len(data_loader.dataset)
@@ -242,6 +247,9 @@ class Trainer():
             total += images.shape[0]
         
         val_acc = acc / total
+        
+        if test:
+            return val_acc
 
         self.val_acc_list.append(val_acc)
         self.val_loss_list.append(losses.avg)
@@ -288,3 +296,7 @@ class Trainer():
         assert cnt == 1
         
         return delta
+    
+    def save_client_param(self):
+        torch.save(self.model.parameters(), os.path.join(self.client_save_path, 'best_val.pth'))
+        
