@@ -35,7 +35,8 @@ class Trainer():
         model: nn.Module,
         device: torch.device,
         index : int,
-        client_save_path : str
+        client_save_path : str,
+        use_val : bool
     ) -> None:
         self.cfg = cfg
         self.model = model
@@ -48,6 +49,7 @@ class Trainer():
         self.best_metric = dict()
         self.best_metric['acc'] = 0
         self.client_save_path = client_save_path
+        self.use_val = use_val
         os.makedirs(self.client_save_path, exist_ok=True)
 
         # solver related
@@ -128,7 +130,7 @@ class Trainer():
     #     labels = data["label"]
     #     return inputs, labels
 
-    def train_classifier(self, train_loader, val_loader, test_loader, server_epoch):
+    def train_classifier(self, train_loader, server_epoch, val_loader=None,):
         """
         Train a classifier using epoch
         """
@@ -180,28 +182,28 @@ class Trainer():
             self.model.eval()
 
             # eval at each epoch for single gpu training
+            if self.use_val:
+                val_loss, val_acc = self.eval_classifier(val_loader, test=False)
 
-            val_loss, val_acc = self.eval_classifier(val_loader, test=False)
+                if val_acc >= self.best_metric['acc']:
+                    best_epoch = epoch + 1
+                    self.best_metric['acc'] = val_acc
+                    self.best_metric['epoch'] = server_epoch
 
-            if val_acc >= self.best_metric['acc']:
-                best_epoch = epoch + 1
-                self.best_metric['acc'] = val_acc
-                self.best_metric['epoch'] = server_epoch
+                    print(f'Best epoch {best_epoch}: best metric: {self.best_metric["acc"]:.3f}')
 
-                print(f'Best epoch {best_epoch}: best metric: {self.best_metric["acc"]:.3f}')
-
-                patience = 0
-                # if self.cfg.MODEL.SAVE_CKPT:
-                #     out_path = os.path.join(
-                #         self.cfg.OUTPUT_DIR, f"best_for_client{self.index}.pth")
-                #     torch.save(self.model.parameters(), out_path)
-                self.save_client_param()
-            else:
-                patience += 1
-            
-            if patience >= self.cfg.SOLVER.PATIENCE:
-                print("No improvement. Breaking out of loop. for client {self.index}")
-                break
+                    patience = 0
+                    # if self.cfg.MODEL.SAVE_CKPT:
+                    #     out_path = os.path.join(
+                    #         self.cfg.OUTPUT_DIR, f"best_for_client{self.index}.pth")
+                    #     torch.save(self.model.parameters(), out_path)
+                    self.save_client_param()
+                else:
+                    patience += 1
+                
+                if patience >= self.cfg.SOLVER.PATIENCE:
+                    print("No improvement. Breaking out of loop. for client {self.index}")
+                    break
 
         # save the last checkpoints
         # if self.cfg.MODEL.SAVE_CKPT:
@@ -229,8 +231,9 @@ class Trainer():
         """evaluate classifier"""
         # batch_time = AverageMeter('Time', ':6.3f')
         # data_time = AverageMeter('Data', ':6.3f')
-        if test:
+        if test and self.use_val:
             self.model.load_state_dict(torch.load(os.path.join(self.client_save_path, 'best_val.pth')))
+
         losses = AverageMeter('Loss', ':.4e')
 
         total = len(data_loader.dataset)

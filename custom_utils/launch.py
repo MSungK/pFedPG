@@ -70,6 +70,8 @@ def default_argument_parser():
     parser.add_argument(
         "--device", default="0", type=str, help="device for trian/inference")
     parser.add_argument(
+        "--use_val", action='store_true', help="whether use validation set")
+    parser.add_argument(
         "--lr", default=1e-3, type=float, help="lr for server")
     parser.add_argument(
         "--weight_decay", default=1e-4, type=float, help="weight_decay for server")

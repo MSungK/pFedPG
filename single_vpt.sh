@@ -1,6 +1,7 @@
 #! /usr/bin/zsh
 
-rm -r single_vpt/*
+rm -r no_val_single_vpt/*
+mkdir no_val_single_vpt
 
 for seed in "42" "44" "46" "48" "50"
 do
@@ -9,7 +10,7 @@ do
         --device 2 \
         --lr 1e-3 \
         --weight_decay 1e-4 \
-        --server_epoch 5 \
+        --server_epoch 100 \
         --config-file custom_configs/office_caltech10.yaml \
         MODEL.TYPE "vit" \
         DATA.BATCH_SIZE "8" \
@@ -23,5 +24,5 @@ do
         SOLVER.WEIGHT_DECAY "0.001" \
         SEED $seed \
         MODEL.MODEL_ROOT "weights/" \
-        OUTPUT_DIR "single_vpt" 
+        OUTPUT_DIR "no_val_single_vpt" 
 done
