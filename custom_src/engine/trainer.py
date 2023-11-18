@@ -45,7 +45,8 @@ class Trainer():
         self.val_loss_list = list()
         self.val_acc_list = list()
         self.max_val_loss = 1e5
-        self.best_metric = 0
+        self.best_metric = dict()
+        self.best_metric['acc'] = 0
         self.client_save_path = client_save_path
         os.makedirs(self.client_save_path, exist_ok=True)
 
@@ -182,10 +183,13 @@ class Trainer():
 
             val_loss, val_acc = self.eval_classifier(val_loader, test=False)
 
-            if val_acc > self.best_metric:
-                self.best_metric = val_acc
+            if val_acc > self.best_metric['acc']:
                 best_epoch = epoch + 1
-                print(f'Best epoch {best_epoch}: best metric: {self.best_metric:.3f}')
+                self.best_metric['acc'] = val_acc
+                self.best_metric['epoch'] = best_epoch
+
+                print(f'Best epoch {best_epoch}: best metric: {self.best_metric["acc"]:.3f}')
+
                 patience = 0
                 # if self.cfg.MODEL.SAVE_CKPT:
                 #     out_path = os.path.join(

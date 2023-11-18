@@ -102,14 +102,17 @@ def train(cfg, args):
     for i, client in enumerate(clients):
         test_acc = client.eval_classifier(test_loaders[i], test=True)
         client_dir = client.client_save_path
-        plt.plot(range(len(client.train_loss_list)), client.train_loss_list)
-        plt.plot(range(len(client.val_loss_list)), client.val_loss_list)
+        plt.plot(range(len(client.train_loss_list)), client.train_loss_list, label='train')
+        plt.plot(range(len(client.val_loss_list)), client.val_loss_list, label='valid')
+        plt.legend()
         plt.xlabel('iteration')
         plt.ylabel('loss')
         plt.title('train & val loss')
         plt.savefig(f'{client_dir}/loss.png')
-        f.write(f'client_{i} val: {client.best_metric} \n')
+        f.write(f'client_{i} val: {client.best_metric["acc"]} \n')
+        f.write(f'client_{i} best val at epoch: {client.best_metric["epoch"]} \n')
         f.write(f'client_{i} test: {test_acc} \n')
+        f.write('==='*10 + '\n')
         print(f'client_{i}: {test_acc}')
     f.close()
     
