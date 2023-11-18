@@ -44,6 +44,7 @@ class Trainer():
         self.val_loss_list = list()
         self.val_acc_list = list()
         self.max_val_loss = 1e5
+        self.best_metric = 0
 
         # solver related
         self.optimizer = make_optimizer([self.model], cfg.SOLVER)
@@ -134,7 +135,6 @@ class Trainer():
         total_epoch = self.cfg.SOLVER.TOTAL_EPOCH
         total_data = len(train_loader.dataset)
         best_epoch = -1
-        self.best_metric = 0
         # log_interval = self.cfg.SOLVER.LOG_EVERY_N
 
         losses = AverageMeter('Loss', ':.4e')
@@ -272,6 +272,7 @@ class Trainer():
                 assert param.shape == client_specific_prompt.shape
                 param = client_specific_prompt
                 self.initial_prompt = param.clone()
+                print('~~~'*10)
                 print(f'Initialize client {self.index} prompt with server')
                 cnt+=1
         assert cnt == 1
