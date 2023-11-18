@@ -68,7 +68,13 @@ def default_argument_parser():
     """
     parser = argparse.ArgumentParser(description="visual-prompt")
     parser.add_argument(
-        "--device", default="0", type=int, help="device for trian/inference")
+        "--device", default="0", type=str, help="device for trian/inference")
+    parser.add_argument(
+        "--lr", default=1e-3, type=float, help="lr for server")
+    parser.add_argument(
+        "--weight_decay", default=1e-4, type=float, help="weight_decay for server")
+    parser.add_argument(
+        "--server_epoch", default=50, type=int, help="epoch for server")
     parser.add_argument(
         "--config-file", default="", metavar="FILE", help="path to config file")
     parser.add_argument(

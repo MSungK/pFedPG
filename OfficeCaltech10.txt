@@ -1,0 +1,13 @@
+total: 2533 
+amazon_train: 729 
+amazon_val: 37 
+amazon_test: 192 
+caltech_train: 861 
+caltech_val: 37 
+caltech_test: 225 
+dslr_train: 88 
+dslr_val: 37 
+dslr_test: 32 
+webcam_train: 199 
+webcam_val: 37 
+webcam_test: 59 

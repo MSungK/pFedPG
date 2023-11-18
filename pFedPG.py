@@ -4,10 +4,11 @@ from random import randint
 import random
 import torch
 import numpy as np
+from matplotlib import pyplot as plt
 
 from custom_src.utils.file_io import PathManager
 from custom_src.models.vit_models import ViT
-from custom_utils.launch import default_argument_parser, logging_train_setup
+from custom_utils.launch import default_argument_parser
 from custom_src.configs.config import get_cfg
 from custom_src.models.build_model import build_model
 from custom_src.engine.trainer import Trainer
@@ -24,7 +25,7 @@ def setup(args):
     lr = cfg.SOLVER.BASE_LR
     wd = cfg.SOLVER.WEIGHT_DECAY
     output_folder = os.path.join(
-    cfg.DATA.NAME, cfg.DATA.FEATURE, f"lr{lr}_wd{wd}")
+    cfg.DATA.NAME, f"client_lr{lr}_wd{wd}_server_lr{args.lr}_wd{args.weight_decay}")
     count = 1
     while count <= cfg.RUN_N_TIMES:
         output_path = os.path.join(output_dir, output_folder, f"run{count}")
@@ -54,8 +55,10 @@ def train(cfg, args):
     device = f'cuda:{args.device}'
     # DataLoader
     train_loaders, val_loaders, test_loaders = prepare_data(cfg) # B 3 224 224 
-    # for loader in train_loaders:
-    #     print(len(loader.dataset))
+    # cnt = 0
+    # for a,b,c in zip(train_loaders, val_loaders, test_loaders):
+    #     cnt += len(a.dataset) + len(b.dataset) + len(c.dataset)
+    # print(cnt)
     # exit()
     num_clients = len(train_loaders)
     # Server 
@@ -65,9 +68,10 @@ def train(cfg, args):
     # Setting for Train
     clients = [Trainer(cfg=cfg, model=clients[i], device=device, index=i) for i in range(num_clients)]
     
-    server_epochs = 5
-    server_optimizer = torch.optim.AdamW(params=server.parameters(),lr=1e-3, weight_decay=1e-4)
-
+    server_epochs = args.server_epoch
+    server_optimizer = torch.optim.AdamW(params=server.parameters(),lr=args.lr, weight_decay=args.weight_decay)
+    # print(cfg)
+    # exit()
     for server_epoch in range(server_epochs):
         server_optimizer.zero_grad()
         server.train()
@@ -88,7 +92,24 @@ def train(cfg, args):
         assert client_prompts.shape == client_deltas.shape
         client_prompts.backward(client_deltas) # upstream gradient: client_deltas
         server_optimizer.step()
+    
+    print('!!!' * 10)
+    print('All Training is ended')
+    f = open(os.path.join(cfg.OUTPUT_DIR, 'val_acc.txt'), 'w')
 
+    for i, client in enumerate(clients):
+        client_dir = os.path.join(cfg.OUTPUT_DIR, f'client_i')
+        os.makedirs(client_dir, exist_ok=True)
+        plt.plot(range(len(client.train_loss_list)), client.train_loss_list)
+        plt.plot(range(len(client.val_loss_list)), client.val_loss_list)
+        plt.xlabel('iteration')
+        plt.ylabel('loss')
+        plt.title('train & val loss')
+        plt.savefig(f'{client_dir}/loss.png')
+        f.write(f'client_{i}: {client.best_metric} \n')
+        print(f'client_{i}: {client.best_metric}')
+    f.close()
+    
 
 def main(args):
     cfg = setup(args)
