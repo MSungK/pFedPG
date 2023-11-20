@@ -13,7 +13,7 @@ from custom_src.configs.config import get_cfg
 from custom_src.models.build_model import build_model
 from custom_src.engine.trainer import Trainer
 from server import PromptGenerator
-from custom_utils.loader import prepare_data
+from custom_utils.loader import prepare_caltech, prepare_domainnet
 
 
 def setup(args):
@@ -54,16 +54,12 @@ def train(cfg, args):
     assert torch.cuda.is_available()
     device = f'cuda:{args.device}'
     # DataLoader
-    if args.use_val:
-        train_loaders, val_loaders, test_loaders = prepare_data(cfg, use_val=args.use_val) # B 3 224 224 
-    else:
-        train_loaders, test_loaders = prepare_data(cfg, use_val=args.use_val)
+    assert cfg.DATA.NAME in ["OfficeCaltech10", "DomainNet10"]
+    if cfg.DATA.NAME == "OfficeCaltech10":
+        site = train_loaders, val_loaders, test_loaders = prepare_caltech(cfg) # B 3 224 224 
+    elif cfg.DATA.NAME == "DomainNet10":
+        site = train_loaders, val_loaders, test_loaders = prepare_domainnet(cfg) # B 3 224 224 
     
-        cnt = 0
-        for a,b in zip(train_loaders, test_loaders):
-            cnt += len(a.dataset) + len(b.dataset) 
-        print(f'Total data: {cnt}')
-        assert cnt == 2533
     # cnt = 0
     # for a,b,c in zip(train_loaders, val_loaders, test_loaders):
     #     cnt += len(a.dataset) + len(b.dataset) + len(c.dataset)
@@ -76,8 +72,7 @@ def train(cfg, args):
     clients = [build_model(cfg, device) for _ in range(num_clients)] # Freezed except prompt, head
     # Setting for Train
     clients = [Trainer(cfg=cfg, model=clients[i], device=device, 
-                       index=i, client_save_path=os.path.join(cfg.OUTPUT_DIR, f'client_{i}'),
-                       use_val=args.use_val) 
+                       index=i, client_save_path=os.path.join(cfg.OUTPUT_DIR, f'client_{i}')) 
                        for i in range(num_clients)]
     
     server_epochs = args.server_epoch
@@ -97,13 +92,10 @@ def train(cfg, args):
         for client_index, client in enumerate(clients):
             client.initialize_prompt(client_prompts[0, client_index*10:(client_index+1)*10, :]) # Server gives client-specific client client
             print(f'Start client {client_index} training')
-            if args.use_val:
-                client.train_classifier(train_loader=train_loaders[client_index],
-                                        val_loader=val_loaders[client_index],
-                                        server_epoch=server_epoch+1)
-            else:
-                client.train_classifier(train_loader=train_loaders[client_index], 
-                                        server_epoch=server_epoch+1)
+            client.train_classifier(train_loader=train_loaders[client_index],
+                                    val_loader=val_loaders[client_index],
+                                    server_epoch=server_epoch+1)
+            
             client_deltas.append(client.calculate_delta_prompt())
         
         client_deltas = torch.cat(client_deltas, dim = 1)
@@ -119,23 +111,18 @@ def train(cfg, args):
         test_acc = client.eval_classifier(test_loaders[i], test=True)
         client_dir = client.client_save_path
         plt.plot(range(len(client.train_loss_list)), client.train_loss_list, label='train')
-        if args.use_val:
-            plt.plot(range(len(client.val_loss_list)), client.val_loss_list, label='valid')
+        plt.plot(range(len(client.val_loss_list)), client.val_loss_list, label='valid')
         plt.legend()
         plt.xlabel('iteration')
         plt.ylabel('loss')
-        if args.use_val:
-            plt.title('train & val loss')
-        else:
-            plt.title('train loss')
+        plt.title('train & val loss')
         plt.savefig(f'{client_dir}/loss.png')
         plt.clf()
-        if args.use_val:
-            f.write(f'client_{i} val: {client.best_metric["acc"]} \n')
-            f.write(f'client_{i} best val at epoch: {client.best_metric["epoch"]} \n')
-        f.write(f'client_{i} test: {test_acc} \n')
+        f.write(f'client_{site[i]} val: {client.best_metric["acc"]} \n')
+        f.write(f'client_{site[i]} best val at epoch: {client.best_metric["epoch"]} \n')
+        f.write(f'client_{site[i]} test: {test_acc} \n')
         f.write('==='*10 + '\n')
-        print(f'client_{i}: {test_acc}')
+        print(f'client_{site[i]}: {test_acc}')
     f.write(f'seed: {cfg.SEED} \n')
     f.close()
     

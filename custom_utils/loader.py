@@ -1,9 +1,10 @@
 from torchvision import transforms
 from .office_loader import OfficeDataset
 import torch
+from .domainnet_loader import DomainNetDataset
 
 
-def prepare_data(cfg, use_val=True):
+def prepare_caltech(cfg):
     data_base_path = cfg.DATA.DATAPATH
     transform_office = transforms.Compose([
             transforms.Resize([256, 256]),            
@@ -35,42 +36,40 @@ def prepare_data(cfg, use_val=True):
     # f = open('OfficeCaltech10.txt', 'w')
 
     # f.write(f'total: {len(amazon_trainset)+len(amazon_testset)+len(caltech_trainset)+len(caltech_testset)+len(dslr_trainset)+len(dslr_testset)+len(webcam_trainset)+len(webcam_testset)} \n')
-    if use_val:
-        min_data_len = min(len(amazon_trainset), len(caltech_trainset), len(dslr_trainset), len(webcam_trainset))
-        val_len = int(min_data_len * 0.3)
-        # print(f'val_len: {val_len}')
-        # min_data_len = int(min_data_len * 0.5)
+    min_data_len = min(len(amazon_trainset), len(caltech_trainset), len(dslr_trainset), len(webcam_trainset))
+    val_len = int(min_data_len * 0.3)
+    # print(f'val_len: {val_len}')
+    # min_data_len = int(min_data_len * 0.5)
 
-        amazon_valset = torch.utils.data.Subset(amazon_trainset, list(range(len(amazon_trainset)))[-val_len:]) 
-        amazon_trainset = torch.utils.data.Subset(amazon_trainset, list(range(len(amazon_trainset)-val_len)))
-        # f.write(f'amazon_train: {len(amazon_trainset)} \n')
-        # f.write(f'amazon_val: {len(amazon_valset)} \n')
-        # f.write(f'amazon_test: {len(amazon_testset)} \n')
-        caltech_valset = torch.utils.data.Subset(caltech_trainset, list(range(len(caltech_trainset)))[-val_len:]) 
-        caltech_trainset = torch.utils.data.Subset(caltech_trainset, list(range(len(caltech_trainset)-val_len)))
-        # f.write(f'caltech_train: {len(caltech_trainset)} \n')
-        # f.write(f'caltech_val: {len(caltech_valset)} \n')
-        # f.write(f'caltech_test: {len(caltech_testset)} \n')
+    amazon_valset = torch.utils.data.Subset(amazon_trainset, list(range(len(amazon_trainset)))[-val_len:]) 
+    amazon_trainset = torch.utils.data.Subset(amazon_trainset, list(range(len(amazon_trainset)))[:-val_len])
+    # f.write(f'amazon_train: {len(amazon_trainset)} \n')
+    # f.write(f'amazon_val: {len(amazon_valset)} \n')
+    # f.write(f'amazon_test: {len(amazon_testset)} \n')
+    caltech_valset = torch.utils.data.Subset(caltech_trainset, list(range(len(caltech_trainset)))[-val_len:]) 
+    caltech_trainset = torch.utils.data.Subset(caltech_trainset, list(range(len(caltech_trainset)))[:-val_len])
+    # f.write(f'caltech_train: {len(caltech_trainset)} \n')
+    # f.write(f'caltech_val: {len(caltech_valset)} \n')
+    # f.write(f'caltech_test: {len(caltech_testset)} \n')
 
-        dslr_valset = torch.utils.data.Subset(dslr_trainset, list(range(len(dslr_trainset)))[-val_len:]) 
-        dslr_trainset = torch.utils.data.Subset(dslr_trainset, list(range(len(dslr_trainset)-val_len)))
-        # f.write(f'dslr_train: {len(dslr_trainset)} \n')
-        # f.write(f'dslr_val: {len(dslr_valset)} \n')
-        # f.write(f'dslr_test: {len(dslr_testset)} \n')
+    dslr_valset = torch.utils.data.Subset(dslr_trainset, list(range(len(dslr_trainset)))[-val_len:]) 
+    dslr_trainset = torch.utils.data.Subset(dslr_trainset, list(range(len(dslr_trainset)))[:-val_len])
+    # f.write(f'dslr_train: {len(dslr_trainset)} \n')
+    # f.write(f'dslr_val: {len(dslr_valset)} \n')
+    # f.write(f'dslr_test: {len(dslr_testset)} \n')
 
-        webcam_valset = torch.utils.data.Subset(webcam_trainset, list(range(len(webcam_trainset)))[-val_len:]) 
-        webcam_trainset = torch.utils.data.Subset(webcam_trainset, list(range(len(webcam_trainset)-val_len)))
-        # f.write(f'webcam_train: {len(webcam_trainset)} \n')
-        # f.write(f'webcam_val: {len(webcam_valset)} \n')
-        # f.write(f'webcam_test: {len(webcam_testset)} \n')
-        # f.close()
-        # print(len(amazon_valset)+len(caltech_valset)+len(dslr_valset)+len(webcam_valset)+len(amazon_trainset)+len(amazon_testset)+len(caltech_trainset)+len(caltech_testset)+len(dslr_trainset)+len(dslr_testset)+len(webcam_trainset)+len(webcam_testset))
-        # exit()
-        amazon_val_loader = torch.utils.data.DataLoader(amazon_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
-        caltech_val_loader = torch.utils.data.DataLoader(caltech_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
-        dslr_val_loader = torch.utils.data.DataLoader(dslr_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
-        webcam_val_loader = torch.utils.data.DataLoader(webcam_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
-        val_loaders = [amazon_val_loader, caltech_val_loader, dslr_val_loader, webcam_val_loader]
+    webcam_valset = torch.utils.data.Subset(webcam_trainset, list(range(len(webcam_trainset)))[-val_len:]) 
+    webcam_trainset = torch.utils.data.Subset(webcam_trainset, list(range(len(webcam_trainset)))[:-val_len])
+    # f.write(f'webcam_train: {len(webcam_trainset)} \n')
+    # f.write(f'webcam_val: {len(webcam_valset)} \n')
+    # f.write(f'webcam_test: {len(webcam_testset)} \n')
+    # f.close()
+    # print(len(amazon_valset)+len(caltech_valset)+len(dslr_valset)+len(webcam_valset)+len(amazon_trainset)+len(amazon_testset)+len(caltech_trainset)+len(caltech_testset)+len(dslr_trainset)+len(dslr_testset)+len(webcam_trainset)+len(webcam_testset))
+    # exit()
+    amazon_val_loader = torch.utils.data.DataLoader(amazon_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
+    caltech_val_loader = torch.utils.data.DataLoader(caltech_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
+    dslr_val_loader = torch.utils.data.DataLoader(dslr_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
+    webcam_val_loader = torch.utils.data.DataLoader(webcam_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
     
     amazon_train_loader = torch.utils.data.DataLoader(amazon_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True)
     amazon_test_loader = torch.utils.data.DataLoader(amazon_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
@@ -85,8 +84,68 @@ def prepare_data(cfg, use_val=True):
     webcam_test_loader = torch.utils.data.DataLoader(webcam_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
     
     train_loaders = [amazon_train_loader, caltech_train_loader, dslr_train_loader, webcam_train_loader]
+    val_loaders = [amazon_val_loader, caltech_val_loader, dslr_val_loader, webcam_val_loader]
     test_loaders = [amazon_test_loader, caltech_test_loader, dslr_test_loader, webcam_test_loader]
+
+    cnt = 0
+    site = ['amazon', 'caltech', 'dslr', 'webcam']
+    i=0
+    for a, b, c in zip(train_loaders, val_loaders, test_loaders):
+        cnt += len(a.dataset) + len(b.dataset) + len(c.dataset)
+        print(f'{site[i]} Train: {len(a.dataset)}')
+        print(f'{site[i]} Val: {len(b.dataset)}')
+        print(f'{site[i]} Test: {len(c.dataset)}')
+        i+=1
+    assert cnt == 2533
     
-    if use_val:
-        return train_loaders, val_loaders, test_loaders
-    return train_loaders, test_loaders
+    return site, train_loaders, val_loaders, test_loaders
+
+
+
+def prepare_domainnet(cfg):
+    data_base_path = cfg.DATA.DATAPATH
+    transform_train = transforms.Compose([
+            transforms.Resize([256, 256]),            
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation((-30,30)),
+            transforms.CenterCrop([224,224]),
+            transforms.ToTensor(),
+    ])
+
+    transform_test = transforms.Compose([
+            transforms.Resize([256, 256]),   
+            transforms.CenterCrop([224,224]),         
+            transforms.ToTensor(),
+    ])
+
+    min_data_len = 5e8
+    tmp = list()
+    for site in ['clipart', 'infograph', 'painting', 'quickdraw', 'real', 'sketch']:
+        tmp.append(DomainNetDataset(data_base_path, site, transform=transform_train, train=True))
+        if min_data_len > len(tmp[-1]):
+            min_data_len = len(tmp[-1])
+
+    val_len = int(min_data_len * 0.05)
+    min_data_len = int(min_data_len * 0.05)
+
+    train_loaders = list()
+    val_loaders = list()
+    test_loaders = list()
+
+    for site in ['clipart', 'infograph', 'painting', 'quickdraw', 'real', 'sketch']:
+        trainset = DomainNetDataset(data_base_path, site, transform=transform_train, train=True)
+        testset = DomainNetDataset(data_base_path, site, transform=transform_test, train=False)
+        cnt = len(trainset) + len(testset)
+        
+        valset = torch.utils.data.Subset(trainset, list(range(len(trainset)))[-val_len:])
+        trainset = torch.utils.data.Subset(trainset, list(range(len(trainset)))[:-val_len])
+
+        train_loaders.append(torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, pin_memory=True))
+        val_loaders.append(torch.utils.data.DataLoader(valset, batch_size=32, shuffle=False, pin_memory=True))
+        test_loaders.append(torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False, pin_memory=True))
+        assert cnt == len(train_loaders[-1].dataset) + len(val_loaders[-1].dataset) + len(test_loaders[-1].dataset)
+        print(f'{site} Train: {len(train_loaders[-1].dataset)}')
+        print(f'{site} Val: {len(val_loaders[-1].dataset)}')
+        print(f'{site} Test: {len(test_loaders[-1].dataset)}')
+    
+    return site, train_loaders, val_loaders, test_loaders

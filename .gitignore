@@ -65,6 +65,7 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+tmp/*
 
 # Django stuff:
 *.log
@@ -143,3 +144,4 @@ dmypy.json
 weights/*
 results/*
 single_vpt/*
+dataset/
