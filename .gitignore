@@ -144,4 +144,4 @@ dmypy.json
 weights/*
 results/*
 single_vpt/*
-dataset/
+dataset/*
