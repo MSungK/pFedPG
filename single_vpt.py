@@ -56,9 +56,9 @@ def train(cfg, args):
     # DataLoader
     assert cfg.DATA.NAME in ["OfficeCaltech10", "DomainNet10"]
     if cfg.DATA.NAME == "OfficeCaltech10":
-        site = train_loaders, val_loaders, test_loaders = prepare_caltech(cfg) # B 3 224 224 
+        site, train_loaders, val_loaders, test_loaders = prepare_caltech(cfg) # B 3 224 224 
     elif cfg.DATA.NAME == "DomainNet10":
-        site = train_loaders, val_loaders, test_loaders = prepare_domainnet(cfg) # B 3 224 224 
+        site, train_loaders, val_loaders, test_loaders = prepare_domainnet(cfg) # B 3 224 224 
     
     # exit()
     num_clients = len(train_loaders)
@@ -66,7 +66,7 @@ def train(cfg, args):
     clients = [build_model(cfg, device) for _ in range(num_clients)] # Freezed except prompt, head
     # Setting for Train
     clients = [Trainer(cfg=cfg, model=clients[i], device=device, 
-                       index=i, client_save_path=os.path.join(cfg.OUTPUT_DIR, f'client_{i}'))
+                       index=i, client_save_path=os.path.join(cfg.OUTPUT_DIR, f'client_{site[i]}'))
                        for i in range(num_clients)]
     
     server_epochs = args.server_epoch

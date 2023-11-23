@@ -57,15 +57,17 @@ def train(cfg, args):
     # DataLoader
     assert cfg.DATA.NAME in ["OfficeCaltech10", "DomainNet10"]
     if cfg.DATA.NAME == "OfficeCaltech10":
-        train_loaders, val_loaders, test_loaders = prepare_caltech(cfg) # B 3 224 224 
+        site, train_loaders, val_loaders, test_loaders = prepare_caltech(cfg) # B 3 224 224 
     elif cfg.DATA.NAME == "DomainNet10":
-        train_loaders, val_loaders, test_loaders = prepare_domainnet(cfg) # B 3 224 224 
+        site, train_loaders, val_loaders, test_loaders = prepare_domainnet(cfg) # B 3 224 224 
     
     # cnt = 0
     # for a,b,c in zip(train_loaders, val_loaders, test_loaders):
     #     cnt += len(a.dataset) + len(b.dataset) + len(c.dataset)
     # print(cnt)
     # exit()
+    print(type(cfg))
+    exit()
     num_clients = len(train_loaders)
     # Server 
     server = PromptGenerator(num_clients=num_clients, config=cfg).to(device)
@@ -130,8 +132,7 @@ def train(cfg, args):
         for key, param in cl1.items():
             if not torch.equal(param, cl3[key]):
                 print(f'{key} differ')
-
-
+        
         print('SUCCESS')
         exit()
         

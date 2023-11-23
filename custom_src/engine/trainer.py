@@ -137,7 +137,7 @@ class Trainer():
 
         # setup training epoch params
         total_epoch = self.cfg.SOLVER.TOTAL_EPOCH
-        total_data = len(train_loader.dataset)
+
         best_epoch = -1
         # log_interval = self.cfg.SOLVER.LOG_EVERY_N
 

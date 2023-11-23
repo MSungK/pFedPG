@@ -3,3 +3,11 @@ torchvision
 pillow
 numpy
 matplotlib
+iopath
+timm==0.4.12
+simplejson
+termcolor
+scikit-learn
+ml_collections
+tabulate
+fvcore

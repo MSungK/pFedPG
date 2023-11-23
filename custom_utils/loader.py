@@ -6,6 +6,7 @@ from .domainnet_loader import DomainNetDataset
 
 def prepare_caltech(cfg):
     data_base_path = cfg.DATA.DATAPATH
+    num_workers = cfg.DATA.NUM_WORKERS
     transform_office = transforms.Compose([
             transforms.Resize([256, 256]),            
             transforms.RandomHorizontalFlip(),
@@ -66,22 +67,22 @@ def prepare_caltech(cfg):
     # f.close()
     # print(len(amazon_valset)+len(caltech_valset)+len(dslr_valset)+len(webcam_valset)+len(amazon_trainset)+len(amazon_testset)+len(caltech_trainset)+len(caltech_testset)+len(dslr_trainset)+len(dslr_testset)+len(webcam_trainset)+len(webcam_testset))
     # exit()
-    amazon_val_loader = torch.utils.data.DataLoader(amazon_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
-    caltech_val_loader = torch.utils.data.DataLoader(caltech_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
-    dslr_val_loader = torch.utils.data.DataLoader(dslr_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
-    webcam_val_loader = torch.utils.data.DataLoader(webcam_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
+    amazon_val_loader = torch.utils.data.DataLoader(amazon_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=num_workers)
+    caltech_val_loader = torch.utils.data.DataLoader(caltech_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=num_workers)
+    dslr_val_loader = torch.utils.data.DataLoader(dslr_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=num_workers)
+    webcam_val_loader = torch.utils.data.DataLoader(webcam_valset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=num_workers)
     
-    amazon_train_loader = torch.utils.data.DataLoader(amazon_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True)
-    amazon_test_loader = torch.utils.data.DataLoader(amazon_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
+    amazon_train_loader = torch.utils.data.DataLoader(amazon_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=num_workers)
+    amazon_test_loader = torch.utils.data.DataLoader(amazon_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=num_workers)
 
-    caltech_train_loader = torch.utils.data.DataLoader(caltech_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True)
-    caltech_test_loader = torch.utils.data.DataLoader(caltech_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
+    caltech_train_loader = torch.utils.data.DataLoader(caltech_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=num_workers)
+    caltech_test_loader = torch.utils.data.DataLoader(caltech_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=num_workers)
 
-    dslr_train_loader = torch.utils.data.DataLoader(dslr_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True)
-    dslr_test_loader = torch.utils.data.DataLoader(dslr_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
+    dslr_train_loader = torch.utils.data.DataLoader(dslr_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=num_workers)
+    dslr_test_loader = torch.utils.data.DataLoader(dslr_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=num_workers)
 
-    webcam_train_loader = torch.utils.data.DataLoader(webcam_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True)
-    webcam_test_loader = torch.utils.data.DataLoader(webcam_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False)
+    webcam_train_loader = torch.utils.data.DataLoader(webcam_trainset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=num_workers)
+    webcam_test_loader = torch.utils.data.DataLoader(webcam_testset, batch_size=cfg.DATA.BATCH_SIZE, shuffle=False, pin_memory=True, num_workers=num_workers)
     
     train_loaders = [amazon_train_loader, caltech_train_loader, dslr_train_loader, webcam_train_loader]
     val_loaders = [amazon_val_loader, caltech_val_loader, dslr_val_loader, webcam_val_loader]
@@ -140,12 +141,14 @@ def prepare_domainnet(cfg):
         valset = torch.utils.data.Subset(trainset, list(range(len(trainset)))[-val_len:])
         trainset = torch.utils.data.Subset(trainset, list(range(len(trainset)))[:-val_len])
 
-        train_loaders.append(torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, pin_memory=True))
-        val_loaders.append(torch.utils.data.DataLoader(valset, batch_size=32, shuffle=False, pin_memory=True))
-        test_loaders.append(torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False, pin_memory=True))
+        train_loaders.append(torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, pin_memory=True, num_workers=cfg.DATA.NUM_WORKERS))
+        val_loaders.append(torch.utils.data.DataLoader(valset, batch_size=32, shuffle=False, pin_memory=True, num_workers=cfg.DATA.NUM_WORKERS))
+        test_loaders.append(torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False, pin_memory=True, num_workers=cfg.DATA.NUM_WORKERS))
         assert cnt == len(train_loaders[-1].dataset) + len(val_loaders[-1].dataset) + len(test_loaders[-1].dataset)
         print(f'{site} Train: {len(train_loaders[-1].dataset)}')
         print(f'{site} Val: {len(val_loaders[-1].dataset)}')
         print(f'{site} Test: {len(test_loaders[-1].dataset)}')
+    
+    site = ['clipart', 'infograph', 'painting', 'quickdraw', 'real', 'sketch']
     
     return site, train_loaders, val_loaders, test_loaders
