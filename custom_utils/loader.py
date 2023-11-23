@@ -3,6 +3,9 @@ from .office_loader import OfficeDataset
 import torch
 from .domainnet_loader import DomainNetDataset
 
+mean=[0.5, 0.5, 0.5]
+std=[0.5, 0.5, 0.5]
+
 
 def prepare_caltech(cfg):
     data_base_path = cfg.DATA.DATAPATH
@@ -13,12 +16,14 @@ def prepare_caltech(cfg):
             transforms.RandomRotation((-30,30)),
             transforms.CenterCrop([224,224]),
             transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std)
     ])
 
     transform_test = transforms.Compose([
             transforms.Resize([256, 256]),   
             transforms.CenterCrop([224,224]),         
             transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std)
     ])
     
     # amazon
@@ -111,12 +116,14 @@ def prepare_domainnet(cfg):
             transforms.RandomRotation((-30,30)),
             transforms.CenterCrop([224,224]),
             transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std)
     ])
 
     transform_test = transforms.Compose([
             transforms.Resize([256, 256]),   
             transforms.CenterCrop([224,224]),         
             transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std)
     ])
 
     min_data_len = 5e8
