@@ -1,6 +1,6 @@
 #! /usr/bin/zsh
 
-output_dir="sample_single_vpt"
+output_dir="results/sample_single_vpt"
 
 rm -r $output_dir
 mkdir $output_dir

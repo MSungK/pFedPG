@@ -13,8 +13,9 @@ def get_files_count(path):
 
 
 if __name__ == '__main__':
-    path = 'dataset/office_caltech_10'
-    tmp = ['caltech', 'amazon', 'webcam', 'dslr']
+    path = '/workspace/pFedPG/dataset/DomainNet/quickdraw'
+    tmp = ['bird', 'feather', 'headphones', 'ice_cream', 'teapot', 'tiger', 'whale', 'windmill', 'wine_glass', 'zebra']
+
     cnt = 0 
     for t in tmp:
         tmp_path = osp.join(path, t)

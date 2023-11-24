@@ -13,7 +13,7 @@ class OfficeDataset(Dataset):
         else:
             # self.paths, self.text_labels = np.load('../data/office_caltech_10/{}_test.pkl'.format(site), allow_pickle=True)
             self.paths, self.text_labels = np.load(f'{base_path}/{site}_test.pkl', allow_pickle=True)
-            
+        
         label_dict={'back_pack':0, 'bike':1, 'calculator':2, 'headphones':3, 'keyboard':4, 'laptop_computer':5, 'monitor':6, 'mouse':7, 'mug':8, 'projector':9}
         self.labels = [label_dict[text] for text in self.text_labels]
         self.transform = transform

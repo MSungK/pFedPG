@@ -13,7 +13,6 @@ def prepare_caltech(cfg):
     transform_office = transforms.Compose([
             transforms.Resize([256, 256]),            
             transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation((-30,30)),
             transforms.CenterCrop([224,224]),
             transforms.ToTensor(),
             transforms.Normalize(mean=mean, std=std)
@@ -113,7 +112,6 @@ def prepare_domainnet(cfg):
     transform_train = transforms.Compose([
             transforms.Resize([256, 256]),            
             transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation((-30,30)),
             transforms.CenterCrop([224,224]),
             transforms.ToTensor(),
             transforms.Normalize(mean=mean, std=std)
