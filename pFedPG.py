@@ -66,9 +66,13 @@ def train(cfg, args):
     #     cnt += len(a.dataset) + len(b.dataset) + len(c.dataset)
     # print(cnt)
     # exit()
+    # Use pFedPG or SingleVPT
     num_clients = len(train_loaders)
+    mode = True if args.server_epoch > 1 else False
+    print('pFedPG') if mode else print('SingleVPT')
     # Server 
-    server = PromptGenerator(num_clients=num_clients, config=cfg).to(device)
+    if mode:
+        server = PromptGenerator(num_clients=num_clients, config=cfg).to(device)
     # Each Client have vpt
     clients = [build_model(cfg, device) for _ in range(num_clients)] # Freezed except prompt, head
     # Setting for Train
@@ -77,33 +81,38 @@ def train(cfg, args):
                        for i in range(num_clients)]
     
     server_epochs = args.server_epoch
-    server_optimizer = torch.optim.AdamW(params=server.parameters(),lr=args.lr, weight_decay=args.weight_decay)
+    if mode:
+        server_optimizer = torch.optim.AdamW(params=server.parameters(),lr=args.lr, weight_decay=args.weight_decay)
     # print(cfg)
     # exit()
 
     for server_epoch in range(server_epochs):
         print('$$$'*10)
         print(f'Start server {server_epoch+1} / {server_epochs} training')
-        server_optimizer.zero_grad()
-        server.train()
-        client_prompts = server.forward() # 1 num_clients embedded_dims
+        
+        if mode:
+            server_optimizer.zero_grad()
+            server.train()
+            client_prompts = server.forward() # 1 num_clients embedded_dims
 
-        client_deltas = list()
+            client_deltas = list()
 
         # SOLVER.TOTAL_EPOCH : communication round
         for client_index, client in enumerate(clients):
-            client.initialize_prompt(client_prompts[0, client_index*10:(client_index+1)*10, :]) # Server gives client-specific client client
+            if mode:
+                client.initialize_prompt(client_prompts[0, client_index*10:(client_index+1)*10, :]) # Server gives client-specific client client
             print(f'Start client {site[client_index]} training')
             client.train_classifier(train_loader=train_loaders[client_index],
                                     val_loader=val_loaders[client_index],
                                     server_epoch=server_epoch+1)
-            
-            client_deltas.append(client.calculate_delta_prompt())
+            if mode:
+                client_deltas.append(client.calculate_delta_prompt())
         
-        client_deltas = torch.cat(client_deltas, dim = 1)
-        assert client_prompts.shape == client_deltas.shape
-        client_prompts.backward(client_deltas) # upstream gradient: client_deltas
-        server_optimizer.step()
+        if mode:
+            client_deltas = torch.cat(client_deltas, dim = 1)
+            assert client_prompts.shape == client_deltas.shape
+            client_prompts.backward(client_deltas) # upstream gradient: client_deltas
+            server_optimizer.step()
     
     print('END' * 10)
     print('All Training is ended')
@@ -123,6 +132,9 @@ def train(cfg, args):
         f.write(f'client_{site[i]} best val at epoch: {client.best_metric["epoch"]} \n')
         f.write(f'client_{site[i]} test: {test_acc} \n')
         f.write('==='*10 + '\n')
+        f.write(f'Train ratio: {cfg.DATA.TRAIN_RATIO} \n')
+        f.write(f'Is pFedPG?: {mode} \n')
+
         print(f'client_{site[i]}: {test_acc}')
     
     plt.savefig(os.path.join(cfg.OUTPUT_DIR,'loss.png'))

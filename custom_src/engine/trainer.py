@@ -274,6 +274,7 @@ class Trainer():
         logits = torch.argmax(logits, dim=1)
         return torch.sum(logits == target).item()
     
+    @torch.no_grad()
     def initialize_prompt(self, client_specific_prompt : torch.tensor):
         cnt = 0
         self.initial_prompt = None
@@ -290,6 +291,7 @@ class Trainer():
                 cnt+=1
         assert cnt == 1
 
+    @torch.no_grad()
     def calculate_delta_prompt(self):
         cnt = 0
         delta = None
@@ -302,6 +304,7 @@ class Trainer():
         
         return delta
     
+    @torch.no_grad()
     def save_client_param(self):
         torch.save(self.model.state_dict(), os.path.join(self.client_save_path, 'best_val.pth'))
         

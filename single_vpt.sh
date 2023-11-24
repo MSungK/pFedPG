@@ -10,7 +10,7 @@ for ratio in "0.01" "0.02" "0.03" "0.04" " 0.05"
     for seed in "44" 
     do
         echo "Current Seed: $seed"
-        python single_vpt.py \
+        python pFedPG.py \
             --device 3 \
             --lr 1e-3 \
             --weight_decay 1e-6 \

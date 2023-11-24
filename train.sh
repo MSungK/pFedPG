@@ -5,6 +5,7 @@ output_dir="results/domain_pFedPG"
 # rm -r $output_dir
 # mkdir $output_dir
 
+
 for seed in "44" 
 do
     echo "Current Seed: $seed"
