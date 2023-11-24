@@ -10,6 +10,9 @@ std=[0.5, 0.5, 0.5]
 def prepare_caltech(cfg):
     data_base_path = cfg.DATA.DATAPATH
     num_workers = cfg.DATA.NUM_WORKERS
+    train_ratio = cfg.DATA.TRAIN_RATIO
+    assert train_ratio <= 0.5
+
     transform_office = transforms.Compose([
             transforms.Resize([256, 256]),            
             transforms.RandomHorizontalFlip(),
@@ -42,29 +45,30 @@ def prepare_caltech(cfg):
 
     # f.write(f'total: {len(amazon_trainset)+len(amazon_testset)+len(caltech_trainset)+len(caltech_testset)+len(dslr_trainset)+len(dslr_testset)+len(webcam_trainset)+len(webcam_testset)} \n')
     min_data_len = min(len(amazon_trainset), len(caltech_trainset), len(dslr_trainset), len(webcam_trainset))
-    val_len = int(min_data_len * 0.3)
+    val_len = int(min_data_len * 0.4)
+    min_data_len = int(min_data_len * train_ratio)
     # print(f'val_len: {val_len}')
     # min_data_len = int(min_data_len * 0.5)
 
     amazon_valset = torch.utils.data.Subset(amazon_trainset, list(range(len(amazon_trainset)))[-val_len:]) 
-    amazon_trainset = torch.utils.data.Subset(amazon_trainset, list(range(len(amazon_trainset)))[:-val_len])
+    amazon_trainset = torch.utils.data.Subset(amazon_trainset, list(range(min_data_len)))
     # f.write(f'amazon_train: {len(amazon_trainset)} \n')
     # f.write(f'amazon_val: {len(amazon_valset)} \n')
     # f.write(f'amazon_test: {len(amazon_testset)} \n')
     caltech_valset = torch.utils.data.Subset(caltech_trainset, list(range(len(caltech_trainset)))[-val_len:]) 
-    caltech_trainset = torch.utils.data.Subset(caltech_trainset, list(range(len(caltech_trainset)))[:-val_len])
+    caltech_trainset = torch.utils.data.Subset(caltech_trainset, list(range(min_data_len)))
     # f.write(f'caltech_train: {len(caltech_trainset)} \n')
     # f.write(f'caltech_val: {len(caltech_valset)} \n')
     # f.write(f'caltech_test: {len(caltech_testset)} \n')
 
     dslr_valset = torch.utils.data.Subset(dslr_trainset, list(range(len(dslr_trainset)))[-val_len:]) 
-    dslr_trainset = torch.utils.data.Subset(dslr_trainset, list(range(len(dslr_trainset)))[:-val_len])
+    dslr_trainset = torch.utils.data.Subset(dslr_trainset, list(range(min_data_len)))
     # f.write(f'dslr_train: {len(dslr_trainset)} \n')
     # f.write(f'dslr_val: {len(dslr_valset)} \n')
     # f.write(f'dslr_test: {len(dslr_testset)} \n')
 
     webcam_valset = torch.utils.data.Subset(webcam_trainset, list(range(len(webcam_trainset)))[-val_len:]) 
-    webcam_trainset = torch.utils.data.Subset(webcam_trainset, list(range(len(webcam_trainset)))[:-val_len])
+    webcam_trainset = torch.utils.data.Subset(webcam_trainset, list(range(min_data_len)))
     # f.write(f'webcam_train: {len(webcam_trainset)} \n')
     # f.write(f'webcam_val: {len(webcam_valset)} \n')
     # f.write(f'webcam_test: {len(webcam_testset)} \n')
@@ -123,6 +127,8 @@ def prepare_domainnet(cfg):
             transforms.ToTensor(),
             transforms.Normalize(mean=mean, std=std)
     ])
+    train_ratio = cfg.DATA.TRAIN_RATIO
+    assert train_ratio <= 0.5
 
     min_data_len = 5e8
     tmp = list()
@@ -132,7 +138,7 @@ def prepare_domainnet(cfg):
             min_data_len = len(tmp[-1])
 
     val_len = int(min_data_len * 0.05)
-    min_data_len = int(min_data_len * 0.05)
+    min_data_len = int(min_data_len * train_ratio)
 
     train_loaders = list()
     val_loaders = list()
@@ -143,13 +149,15 @@ def prepare_domainnet(cfg):
         testset = DomainNetDataset(data_base_path, site, transform=transform_test, train=False)
         cnt = len(trainset) + len(testset)
         
+        # valset = torch.utils.data.Subset(trainset, list(range(len(trainset)))[-val_len:])
+        # trainset = torch.utils.data.Subset(trainset, list(range(len(trainset)))[:-val_len])
         valset = torch.utils.data.Subset(trainset, list(range(len(trainset)))[-val_len:])
-        trainset = torch.utils.data.Subset(trainset, list(range(len(trainset)))[:-val_len])
+        trainset = torch.utils.data.Subset(trainset, list(range(min_data_len)))
 
         train_loaders.append(torch.utils.data.DataLoader(trainset, batch_size=32, shuffle=True, pin_memory=True, num_workers=cfg.DATA.NUM_WORKERS))
         val_loaders.append(torch.utils.data.DataLoader(valset, batch_size=32, shuffle=False, pin_memory=True, num_workers=cfg.DATA.NUM_WORKERS))
         test_loaders.append(torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False, pin_memory=True, num_workers=cfg.DATA.NUM_WORKERS))
-        assert cnt == len(train_loaders[-1].dataset) + len(val_loaders[-1].dataset) + len(test_loaders[-1].dataset)
+        # assert cnt == len(train_loaders[-1].dataset) + len(val_loaders[-1].dataset) + len(test_loaders[-1].dataset)
         print(f'{site} Train: {len(train_loaders[-1].dataset)}')
         print(f'{site} Val: {len(val_loaders[-1].dataset)}')
         print(f'{site} Test: {len(test_loaders[-1].dataset)}')

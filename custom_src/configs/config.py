@@ -129,6 +129,8 @@ _C.DATA.BATCH_SIZE = 32
 _C.DATA.NUM_WORKERS = 4
 # Load data to pinned host memory
 _C.DATA.PIN_MEMORY = True
+# Specify the ratio of trainset
+_C.DATA.TRAIN_RATIO = 0.01
 
 _C.DIST_BACKEND = "nccl"
 _C.DIST_INIT_PATH = "env://"

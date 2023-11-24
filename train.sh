@@ -1,18 +1,18 @@
 #! /usr/bin/zsh
 
-output_dir="t"
+output_dir="results/domain_pFedPG"
 
 # rm -r $output_dir
 # mkdir $output_dir
 
-for seed in "42" 
+for seed in "44" 
 do
     echo "Current Seed: $seed"
     python pFedPG.py \
         --device 3 \
         --lr 1e-3 \
-        --weight_decay 1e-4 \
-        --server_epoch 5 \
+        --weight_decay 1e-6 \
+        --server_epoch 20 \
         --config-file custom_configs/domainnet10.yaml \
         MODEL.TYPE "vit" \
         MODEL.PROMPT.NUM_TOKENS "10" \
@@ -20,8 +20,9 @@ do
         MODEL.PROMPT.DROPOUT "0.1" \
         DATA.FEATURE "sup_vitb16_imagenet21k" \
         DATA.BATCH_SIZE "64" \
-        DATA.NUM_WORKERS "8" \
-        SOLVER.TOTAL_EPOCH "1" \
+        DATA.NUM_WORKERS "4" \
+        DATA.TRAIN_RATIO "0.1" \
+        SOLVER.TOTAL_EPOCH "5" \
         SOLVER.BASE_LR "0.25" \
         SOLVER.WEIGHT_DECAY "0.001" \
         SEED $seed \

@@ -54,6 +54,7 @@ def train(cfg, args):
     assert torch.cuda.is_available()
     device = f'cuda:{args.device}'
     # DataLoader
+    print(f'Train Ratio: {cfg.DATA.TRAIN_RATIO}')
     assert cfg.DATA.NAME in ["OfficeCaltech10", "DomainNet10"]
     if cfg.DATA.NAME == "OfficeCaltech10":
         site, train_loaders, val_loaders, test_loaders = prepare_caltech(cfg) # B 3 224 224 
@@ -92,7 +93,7 @@ def train(cfg, args):
         # SOLVER.TOTAL_EPOCH : communication round
         for client_index, client in enumerate(clients):
             client.initialize_prompt(client_prompts[0, client_index*10:(client_index+1)*10, :]) # Server gives client-specific client client
-            print(f'Start client {client_index} training')
+            print(f'Start client {site[client_index]} training')
             client.train_classifier(train_loader=train_loaders[client_index],
                                     val_loader=val_loaders[client_index],
                                     server_epoch=server_epoch+1)
@@ -110,20 +111,21 @@ def train(cfg, args):
 
     for i, client in enumerate(clients):
         test_acc = client.eval_classifier(test_loaders[i], test=True)
-        client_dir = client.client_save_path
+        plt.subplot(2, len(clients)//2, i+1)
         plt.plot(range(len(client.train_loss_list)), client.train_loss_list, label='train')
         plt.plot(range(len(client.val_loss_list)), client.val_loss_list, label='valid')
         plt.legend()
         plt.xlabel('iteration')
         plt.ylabel('loss')
-        plt.title('train & val loss')
-        plt.savefig(f'{client_dir}/loss.png')
-        plt.clf()
+        plt.title(f'{site[i]}')
+        plt.ylim([0,6])
         f.write(f'client_{site[i]} val: {client.best_metric["acc"]} \n')
         f.write(f'client_{site[i]} best val at epoch: {client.best_metric["epoch"]} \n')
         f.write(f'client_{site[i]} test: {test_acc} \n')
         f.write('==='*10 + '\n')
         print(f'client_{site[i]}: {test_acc}')
+    
+    plt.savefig(os.path.join(cfg.OUTPUT_DIR,'loss.png'))
     f.write(f'seed: {cfg.SEED} \n')
     f.close()
     

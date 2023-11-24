@@ -48,6 +48,7 @@ class Trainer():
         self.best_metric = dict()
         self.best_metric['acc'] = 0
         self.client_save_path = client_save_path
+        self.update = 0
         os.makedirs(self.client_save_path, exist_ok=True)
 
         # solver related
@@ -159,7 +160,7 @@ class Trainer():
             losses.reset()
             # batch_time.reset()
             # data_time.reset()
-
+            self.update += 1
             lr = self.scheduler.get_last_lr()
             print(f'Training {epoch+1} / {total_epoch} epoch, with client {self.index}')
 
@@ -167,7 +168,6 @@ class Trainer():
             self.model.train()
 
             for images, labels in tqdm(train_loader):
-
                 train_loss, _ = self.forward_one_batch(images, labels, is_train=True)
                 losses.update(train_loss.item(), images.shape[0])
             
@@ -182,8 +182,8 @@ class Trainer():
             # eval at each epoch for single gpu training
             val_loss, val_acc = self.eval_classifier(val_loader, test=False)
 
-            if val_acc >= self.best_metric['acc']:
-                best_epoch = epoch + 1
+            if val_acc > self.best_metric['acc']:
+                best_epoch = self.update + 1 
                 self.best_metric['acc'] = val_acc
                 self.best_metric['epoch'] = server_epoch
 
