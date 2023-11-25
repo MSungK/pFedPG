@@ -185,7 +185,7 @@ class Trainer():
             if val_acc > self.best_metric['acc']:
                 best_epoch = self.update + 1 
                 self.best_metric['acc'] = val_acc
-                self.best_metric['epoch'] = server_epoch
+                self.best_metric['epoch'] = best_epoch
 
                 print(f'Best epoch {best_epoch}: best metric: {self.best_metric["acc"]:.3f}')
 
