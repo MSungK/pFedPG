@@ -119,7 +119,7 @@ def train(cfg, args):
     f = open(os.path.join(cfg.OUTPUT_DIR, 'val_test_acc.txt'), 'w')
     f.write(f'Train ratio: {cfg.DATA.TRAIN_RATIO} \n')
     f.write(f'Is this pFedPG?: {mode} \n')
-        
+
     for i, client in enumerate(clients):
         test_acc = client.eval_classifier(test_loaders[i], test=True)
         plt.subplot(2, len(clients)//2, i+1)
@@ -137,6 +137,7 @@ def train(cfg, args):
 
         print(f'client_{site[i]}: {test_acc}')
     
+    plt.subplots_adjust(hspace=0.7)
     plt.savefig(os.path.join(cfg.OUTPUT_DIR,'loss.png'))
     f.write(f'seed: {cfg.SEED} \n')
     f.close()

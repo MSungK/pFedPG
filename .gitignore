@@ -145,3 +145,4 @@ weights/*
 results/*
 single_vpt/*
 dataset/*
+*.ipynb
