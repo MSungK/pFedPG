@@ -117,7 +117,9 @@ def train(cfg, args):
     print('END' * 10)
     print('All Training is ended')
     f = open(os.path.join(cfg.OUTPUT_DIR, 'val_test_acc.txt'), 'w')
-
+    f.write(f'Train ratio: {cfg.DATA.TRAIN_RATIO} \n')
+    f.write(f'Is this pFedPG?: {mode} \n')
+        
     for i, client in enumerate(clients):
         test_acc = client.eval_classifier(test_loaders[i], test=True)
         plt.subplot(2, len(clients)//2, i+1)
@@ -132,8 +134,6 @@ def train(cfg, args):
         f.write(f'client_{site[i]} best val at epoch: {client.best_metric["epoch"]} \n')
         f.write(f'client_{site[i]} test: {test_acc} \n')
         f.write('==='*10 + '\n')
-        f.write(f'Train ratio: {cfg.DATA.TRAIN_RATIO} \n')
-        f.write(f'Is pFedPG?: {mode} \n')
 
         print(f'client_{site[i]}: {test_acc}')
     

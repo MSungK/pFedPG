@@ -1,7 +1,7 @@
 #! /usr/bin/zsh
 
 output_dir="results/domain_pFedPG"
-
+ratio=0.05
 # rm -r $output_dir
 # mkdir $output_dir
 
@@ -22,11 +22,11 @@ do
         DATA.FEATURE "sup_vitb16_imagenet21k" \
         DATA.BATCH_SIZE "64" \
         DATA.NUM_WORKERS "4" \
-        DATA.TRAIN_RATIO "0.1" \
+        DATA.TRAIN_RATIO $ratio \
         SOLVER.TOTAL_EPOCH "5" \
         SOLVER.BASE_LR "0.25" \
         SOLVER.WEIGHT_DECAY "0.001" \
         SEED $seed \
         MODEL.MODEL_ROOT "weights/" \
-        OUTPUT_DIR $output_dir 
+        OUTPUT_DIR "$output_dir-$ratio"
 done
