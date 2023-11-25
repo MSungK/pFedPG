@@ -45,7 +45,7 @@ def prepare_caltech(cfg):
 
     # f.write(f'total: {len(amazon_trainset)+len(amazon_testset)+len(caltech_trainset)+len(caltech_testset)+len(dslr_trainset)+len(dslr_testset)+len(webcam_trainset)+len(webcam_testset)} \n')
     min_data_len = min(len(amazon_trainset), len(caltech_trainset), len(dslr_trainset), len(webcam_trainset))
-    val_len = int(min_data_len * 0.4)
+    val_len = int(min_data_len * train_ratio)
     min_data_len = int(min_data_len * train_ratio)
     # print(f'val_len: {val_len}')
     # min_data_len = int(min_data_len * 0.5)
@@ -137,7 +137,7 @@ def prepare_domainnet(cfg):
         if min_data_len > len(tmp[-1]):
             min_data_len = len(tmp[-1])
 
-    val_len = int(min_data_len * 0.05)
+    val_len = int(min_data_len * train_ratio)
     min_data_len = int(min_data_len * train_ratio)
 
     train_loaders = list()
