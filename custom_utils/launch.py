@@ -12,8 +12,8 @@ from tabulate import tabulate
 from typing import Tuple
 
 import torch
-from src.utils.file_io import PathManager
-from src.utils.distributed import get_rank, get_world_size
+from custom_src.utils.file_io import PathManager
+from custom_src.utils.distributed import get_rank, get_world_size
 
 
 def collect_torch_env() -> str:
